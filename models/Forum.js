@@ -1,4 +1,5 @@
-import mongoose, { Schema, SchemaTypes } from "mongoose"
+const mongoose = require("mongoose")
+const { Schema } = require("mongoose")
 
 const forumSchema = new Schema({
     groupname: {
@@ -41,4 +42,4 @@ const forumSchema = new Schema({
     }
 })
 
-export default forumSchema
+module.exports = mongoose.model('Forum', forumSchema)

@@ -1,4 +1,5 @@
-import mongoose, { Schema, SchemaTypes } from "mongoose"
+const mongoose = require("mongoose")
+const { Schema } = require("mongoose")
 
 const postSchema = new Schema({
     title: {
@@ -32,9 +33,9 @@ const postSchema = new Schema({
         default: Date.now 
     },
     comentaries: {
-        type: SchemaTypes.Array, 
+        type: Array, 
         ref: 'Comentaries'
     }
 })
 
-export default postSchema
+module.exports = mongoose.model('Post', postSchema)

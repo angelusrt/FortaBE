@@ -1,4 +1,5 @@
-import mongoose, { Schema, SchemaTypes } from "mongoose"
+const mongoose = require("mongoose")
+const { Schema } = require("mongoose")
 
 const chatSchema = new Schema({
     members: [{
@@ -16,4 +17,4 @@ const chatSchema = new Schema({
     }]
 })
 
-export default chatSchema
+module.exports = mongoose.model('Chat', chatSchema)

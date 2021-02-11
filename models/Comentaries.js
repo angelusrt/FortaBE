@@ -1,4 +1,5 @@
-import mongoose, { Schema, SchemaTypes } from "mongoose"
+const mongoose = require("mongoose")
+const { Schema } = require("mongoose")
 
 const comentariesSchema = new Schema({
     bodyText: {
@@ -31,4 +32,4 @@ const comentariesSchema = new Schema({
     }]
 })
 
-export default comentariesSchema
+module.exports = mongoose.model('Comentaries', comentariesSchema)
