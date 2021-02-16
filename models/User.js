@@ -1,5 +1,5 @@
 const mongoose = require("mongoose")
-const { Schema } = require("mongoose")
+const { Schema, SchemaTypes } = require("mongoose")
 
 const userSchema = new Schema({
     username: {
@@ -27,19 +27,19 @@ const userSchema = new Schema({
         max: 256
     },
     myChat: [{
-        type: Schema.ObjectId,
+        type: SchemaTypes.ObjectId,
         favorite: Boolean,
         favoriteDefault: false,
         ref: 'Chat'
     }],
     myForums: [{
-        type: Schema.ObjectId,
+        type: SchemaTypes.ObjectId,
         favorite: Boolean,
         favoriteDefault: false,
         ref: 'Forum'
     }],
     myInvites: [{
-        type: Schema.ObjectId,
+        type: SchemaTypes.ObjectId,
         favorite: Boolean,
         favoriteDefault: false,
         ref: 'Invites'

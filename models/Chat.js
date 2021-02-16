@@ -1,15 +1,15 @@
 const mongoose = require("mongoose")
-const { Schema } = require("mongoose")
+const { Schema, SchemaTypes } = require("mongoose")
 
 const chatSchema = new Schema({
     members: [{
-        type: Schema.ObjectId, 
+        type: SchemaTypes.ObjectId, 
         ref: 'User'
     }],
     messages: [{
         type: String,
         author: {
-            type: Schema.ObjectId, 
+            type: SchemaTypes.ObjectId, 
             ref: 'User'
         },
         date: Date,

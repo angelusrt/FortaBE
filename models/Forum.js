@@ -1,15 +1,16 @@
 const mongoose = require("mongoose")
-const { Schema } = require("mongoose")
+const { Schema, SchemaTypes } = require("mongoose")
+const { postSchema } = require("./Post")
 
 const forumSchema = new Schema({
-    groupname: {
+    groupName: {
         type: String,
         required: true,
         max: 16,
     },
     bios: {
         type: String,
-        required: false,
+        required: true,
         default: "Hello World",
         min: 1,
         max: 256
@@ -20,26 +21,23 @@ const forumSchema = new Schema({
         max: 4
     },
     followers: {
-        type: Number,
-        required: true,
-        default: 0,
-        min: 0,
+        type: [SchemaTypes.ObjectId],
+        ref: 'User'
     },
     owner: {
-        type: Schema.ObjectId, 
+        type: SchemaTypes.ObjectId, 
         required: true,
         ref: 'User'
     },
-    mods: {
-        type: [Schema.ObjectId], 
-        required: false,
-        ref: 'User'
-    },
-    comentaries: {
-        type: Array, 
-        required: false,
-        ref: 'Comentaries'
-    }
+    mods: [{
+        mod: {
+            type: SchemaTypes.ObjectId,
+            ref: 'User'
+        },
+        stats: Boolean 
+    }],
+    posts: [postSchema]
 })
 
 module.exports = mongoose.model('Forum', forumSchema)
+module.exports.forumSchema = forumSchema

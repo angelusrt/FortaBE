@@ -22,11 +22,19 @@ mongoose.connect(
 //Import Routes
 const auth = require("./routes/auth")
 const posts = require("./routes/posts")
+const comentaries = require("./routes/comentaries")
+const forums = require("./routes/forums")
+const invites = require("./routes/invites")
+const chats = require("./routes/chats")
 
-//Route Middleware
+//Route Middlewaree
 app.use(express.json())
 app.use("/api/user", auth)
-app.use("/posts", posts)
+
+app.use("/api/forums", forums)
+
+//app.use("/api/invites", invites) 
+//app.use("/api/chats", chats)
 
 //Response
 app.get("/", (req, res) => {

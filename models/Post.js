@@ -1,5 +1,6 @@
 const mongoose = require("mongoose")
-const { Schema } = require("mongoose")
+const { Schema, SchemaTypes } = require("mongoose")
+const { comentariesSchema } = require("./Comentaries")
 
 const postSchema = new Schema({
     title: {
@@ -15,16 +16,17 @@ const postSchema = new Schema({
         max: 512,
     },
     author: {
-        type: Schema.ObjectId, 
+        type: SchemaTypes.ObjectId, 
+        required: true,
         ref: 'User'
     },
     forum: {
-        type: Schema.ObjectId, 
+        type: SchemaTypes.ObjectId, 
         ref: 'Forum'
     },
     upvotes: {
         type: Number,
-        required: true,
+        required: false,
         default: 0,
         min: 0,
     },
@@ -32,10 +34,8 @@ const postSchema = new Schema({
         type: Date, 
         default: Date.now 
     },
-    comentaries: {
-        type: Array, 
-        ref: 'Comentaries'
-    }
+    comentaries: [comentariesSchema]
 })
 
 module.exports = mongoose.model('Post', postSchema)
+module.exports.postSchema = postSchema

@@ -1,5 +1,5 @@
 const mongoose = require("mongoose")
-const { Schema } = require("mongoose")
+const { Schema, SchemaTypes } = require("mongoose")
 
 const comentariesSchema = new Schema({
     bodyText: {
@@ -9,11 +9,12 @@ const comentariesSchema = new Schema({
         max: 512,
     },
     author: {
-        type: Schema.ObjectId, 
+        type: SchemaTypes.ObjectId, 
+        required: true,
         ref: 'User'
     },   
     forum: {
-        type: Schema.ObjectId, 
+        type: SchemaTypes.ObjectId, 
         ref: 'Forum'
     },
     upvotes: {
@@ -26,10 +27,8 @@ const comentariesSchema = new Schema({
         type: Date, 
         default: Date.now 
     },
-    comentaries: [{
-        type: Schema.ObjectId, 
-        ref: 'Comentaries'
-    }]
+    comentaries: [this]
 })
 
 module.exports = mongoose.model('Comentaries', comentariesSchema)
+module.exports.comentariesSchema = comentariesSchema
