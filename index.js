@@ -21,8 +21,6 @@ mongoose.connect(
 
 //Import Routes
 const auth = require("./routes/auth")
-const posts = require("./routes/posts")
-const comentaries = require("./routes/comentaries")
 const forums = require("./routes/forums")
 const invites = require("./routes/invites")
 const chats = require("./routes/chats")

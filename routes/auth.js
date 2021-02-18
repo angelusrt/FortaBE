@@ -30,6 +30,7 @@ router.post("/register", async (req, res) => {
             bios: req.body.bios
         })
         
+        //Save user
         const savedUser = await user.save()
         res.send(savedUser)
     } catch(err){
@@ -51,9 +52,9 @@ router.post("/login", async (req, res) => {
     const authPass = await bcrypt.compare(req.body.password, user.password)
     if(!authPass) return res.status(400).send("Invalid Password")
 
+    //Sends token
     const token = jwt.sign({_id: user._id}, process.env.TOKEN_SECRET)
     res.header("auth-token", token).send(token)
-    //res.send("Logged sucessfully")
 })
 
 module.exports = router
