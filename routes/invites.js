@@ -1,58 +1,81 @@
 const router = require("express").Router()
+
 const verify = require("./verifyToken")
+
 const User = require("../models/User")
-const Forum = require("../models/Forum")
 const Invite = require("../models/Invite")
 
+//Creates invites and sends it 
+function createInvites(sender, receiver, description, forumPath){
+    try {
+        //Gets users
+        const userSender = await User.findById(sender)
+        const userReceiver = await User.findById(receiver)
 
-//Get invite
+        //Create invite
+        const invite = new Invite({
+            sender,
+            receiver,
+            description,
+            forumPath
+        })
+        
+        //Saves invite
+        invite.save()
+
+        //Sends invite
+        userSender.myInvites.push(invite.id)
+        userReceiver.myInvites.push(invite.id)
+    } catch (err) {
+        return err
+    }
+}
+
+//Gets invite
 router.get("/:inviteId", async(req, res) => {
     try{
+        //Gets invite
         const invite = await Invite.findById(req.params.inviteId)
+        
+        //Sends it
         res.json(invite)
     } catch(err){
-        res.status(400).json({ message: err })
+        res.status(400).send(err)
     }
 })
 
 //Delete invite
 router.delete("/:inviteId", verify, async (req, res) => {
     try {    
-        const removedInvite = await Invite.remove({_id: req.params.inviteId})
-        res.json(removedInvite)
+        //Gets invite
+        const invite = await Invite.findById(req.params.inviteId)
+
+        //Verify permission
+        if(req.user !== (invite.sender.toString() || invite.receiver.toString()))
+            return res.status(401).send("Action denied, you don't have permission")
+
+        //Gets users
+        const userSender = await User.findById(invite.sender)
+        const userReceiver = await User.findById(invite.receiver)
+
+        //Removes it 
+        userSender.myInvites = [
+            ...userSender.myInvites.filter(item => item === req.params.inviteId)
+        ]
+        userReceiver.myInvites = [
+            ...userReceiver.myInvites.filter(item => item === req.params.inviteId)
+        ]
+        invite.remove()
+        
+        //Saves and Sends message
+        userSender.save()
+        userReceiver.save()
+        invite.save()
+        res.send("Deleted sucessfully")
     } catch (err) {
-        res.status(400).json({ message: err })
+        res.status(400).send(err)
     }
 })
 
-
-//Submits a invite
-router.post("/", verify, (req, res) => {
-
-    const invite = new Invite({
-        sender: req.body.sender,
-        receiver: req.body.receiver,
-        description: req.body.description
-    })
-    
-    User.findById({_id: req.receiver}).updateOne(
-        { _id: invite.id }, 
-        { $set: { myInvites: invite.id } }
-    )
-
-    invite.save().then( data => {
-        res.json(data)
-    }).catch( err => {
-        res.status(400).json({ message: err })
-    })
-
-    User.save().then( data => {
-        res.json(data)
-    }).catch( err => {
-        res.status(400).json({ message: err })
-    })
-
-    //User.findById({_id: req.user})
-})
-
 module.exports = router
+module.exports.createInvites = createInvites

@@ -12,9 +12,14 @@ const inviteSchema = new Schema({
         required: true,
         ref: 'User'
     },
-    description: {
+    description: { 
         type: String,
         required: true
+    },
+    forumPath: {
+        type: SchemaTypes.ObjectId,
+        required: false,
+        ref: 'Forum'
     }
 })
 

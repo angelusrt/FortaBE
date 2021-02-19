@@ -40,8 +40,6 @@ const userSchema = new Schema({
     }],
     myInvites: [{
         type: SchemaTypes.ObjectId,
-        favorite: Boolean,
-        favoriteDefault: false,
         ref: 'Invites'
     }]
 

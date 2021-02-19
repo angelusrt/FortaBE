@@ -2,7 +2,8 @@ const router = require("express").Router()
 const mongoose = require("mongoose")
 
 const verify = require("./verifyToken")
-
+const { createInvites } = require("./invites")
+ 
 const Forum = require("../models/Forum")
 const Post = require("../models/Post")
 const Comentaries = require("../models/Comentaries")
@@ -75,6 +76,11 @@ router.patch("/:forumId/mods", verify, async (req, res) => {
         //Updates the mod collection
         forum.mods.push(...req.body.mods.map( item => { return { mod: item.mod, stats: false } } ))
 
+        //Makes the invice and sends it
+        for (let i = 0; i < req.body.mods.length; i++) {
+            createInvites(req.user, req.body.mods[i].mod, "mod", req.params.forumId)   
+        }
+
         //Saves and sends
         forum.save()
         res.json("Added one or various mods")
@@ -90,7 +96,10 @@ router.delete("/:forumId/mods", verify, async (req, res) => {
         const forum = await Forum.findById(req.params.forumId)
 
         //Verify permission
-        if(req.user !== forum.owner.toString())
+        if((req.user !== forum.owner.toString()) ||
+            req.body.mods.length === 1 && 
+            req.body.mods[0].mod === req.user 
+        )
             return res.status(401).send("Action denied, you don't have permission")
 
         //Updates the mod collection
