@@ -24,14 +24,16 @@ const auth = require("./routes/auth")
 const forums = require("./routes/forums")
 const invites = require("./routes/invites")
 const chats = require("./routes/chats")
+const groups = require("./routes/groups")
 
 //Route Middleware
 app.use(express.json())
 app.use("/api/user", auth)
 app.use("/api/forums", forums)
 
-//app.use("/api/invites", invites) 
-//app.use("/api/chats", chats)
+app.use("/api/invites", invites) 
+app.use("/api/chats", chats)
+app.use("/api/groups", groups)
 
 //Response
 app.get("/", (req, res) => {

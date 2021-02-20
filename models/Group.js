@@ -1,7 +1,19 @@
 const mongoose = require("mongoose")
 const { Schema, SchemaTypes } = require("mongoose")
 
-const chatSchema = new Schema({
+const groupSchema = new Schema({
+    groupName: {
+        type: String,
+        required: true,
+        max: 16,
+    },
+    bios: {
+        type: String,
+        required: true,
+        default: "Hello World",
+        min: 1,
+        max: 256
+    },
     members: [{
         member: {
             type: SchemaTypes.ObjectId,
@@ -22,4 +34,4 @@ const chatSchema = new Schema({
     }]
 })
 
-module.exports = mongoose.model('Chat', chatSchema)
+module.exports = mongoose.model('Group', groupSchema)

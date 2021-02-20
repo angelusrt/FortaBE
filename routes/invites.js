@@ -6,7 +6,7 @@ const User = require("../models/User")
 const Invite = require("../models/Invite")
 
 //Creates invites and sends it 
-function createInvites(sender, receiver, description, forumPath){
+async function createInvites(sender, receiver, description, path){
     try {
         //Gets users
         const userSender = await User.findById(sender)
@@ -17,7 +17,7 @@ function createInvites(sender, receiver, description, forumPath){
             sender,
             receiver,
             description,
-            forumPath
+            path
         })
         
         //Saves invite

@@ -248,7 +248,7 @@ router.delete("/:forumId/posts/:postId", verify, async (req, res) => {
             (
                 post.author.toString() ||
                 forum.owner.toString() || 
-                forum.mods.map(item => item.mod.toString)
+                forum.mods.map(item => item.mod.toString())
             )
         )
             return res.status(401).send("Action denied, you don't have permission")

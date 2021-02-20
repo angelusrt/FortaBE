@@ -16,10 +16,14 @@ const inviteSchema = new Schema({
         type: String,
         required: true
     },
-    forumPath: {
+    path: {
         type: SchemaTypes.ObjectId,
         required: false,
-        ref: 'Forum'
+        ref: doc => { 
+                doc.description === "mod"? "Forum":
+                doc.description === "chat"? "Chat":
+                "Group"
+        }
     }
 })
 
