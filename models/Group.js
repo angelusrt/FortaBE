@@ -29,8 +29,10 @@ const groupSchema = new Schema({
             required: true,
             ref: 'User'
         },
-        date: Date,
-        default: Date.now
+        date: {
+            type: Date,
+            default: Date.now
+        }
     }]
 })
 

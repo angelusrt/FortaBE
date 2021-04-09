@@ -7,6 +7,7 @@ const { createInvites } = require("./invites")
 const Forum = require("../models/Forum")
 const Post = require("../models/Post")
 const Comentaries = require("../models/Comentaries")
+const User = require("../models/User")
 
 //Submits a forum ✓
 router.post("/", verify, (req, res) => {
@@ -124,12 +125,15 @@ router.patch("/:forumId/follow", verify, async (req, res) => {
     try {    
         //Gets forum
         const forum = await Forum.findById(req.params.forumId)
+        const user = await User.findById(req.user)
         
         //Updates followers
         forum.followers.push(req.user)
+        user.myForums.push(forum._id)
 
         //Saves and sends
         forum.save()
+        user.save()
         res.send("You followed")
     } catch (err) {
         res.status(400).send(err)
@@ -141,14 +145,19 @@ router.delete("/:forumId/follow", verify, async (req, res) => {
     try {    
         //Gets forum
         const forum = await Forum.findById(req.params.forumId)
+        const user = await User.findById(req.user)
 
         //Removes it 
         forum.followers = [
             ...forum.followers.filter(item => item.toString() !== req.user)
         ]
+        user.myChat = [
+            ...user.myChat.filter(item => item.toString() !== forum._id)
+        ]
 
         //Saves it and sends
         forum.save()
+        user.save()
         res.send("Removed sucessfully")
     } catch (err) {
         res.status(400).send(err)
@@ -205,6 +214,8 @@ router.get("/:forumId/posts/:postId", async(req, res) => {
         //Gets post
         const forum = await Forum.findById(req.params.forumId)
         const post = await forum.posts.id(req.params.postId)
+
+        console.log(post)
 
         //Sends it
         res.json(post)

@@ -6,7 +6,7 @@ const { createInvites } = require("./invites")
 const Chat = require("../models/Chat")
 
 //Creates Chat
-router.post("/", verify, (req, res) => {
+router.post("/", verify, async (req, res) => {
     try {
         //Creates chat
         const chat = new Chat({
@@ -150,7 +150,7 @@ router.delete("/:chatId/messages/:messageId", verify, async (req, res) => {
 })
 
 //Deletes Chat
-router.delete("/", verify, (req, res) => {
+router.delete("/", verify, async (req, res) => {
     try {
         //Gets chat
         const chat = await Chat.findById(req.params.chatId)
@@ -170,3 +170,5 @@ router.delete("/", verify, (req, res) => {
         res.status(400).send(err)
     }
 })
+
+module.exports = router

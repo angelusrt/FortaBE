@@ -2,7 +2,9 @@
 const router = require("express").Router()
 const bcrypt = require("bcryptjs")
 const jwt = require("jsonwebtoken")
+const verify = require("./verifyToken")
 const User = require("../models/User")
+
 const { registerValidation, loginValidation } = require("../validation")
 
 //API requests and responses
@@ -32,7 +34,11 @@ router.post("/register", async (req, res) => {
         
         //Save user
         const savedUser = await user.save()
-        res.send(savedUser)
+        //res.send(savedUser)
+
+        //Sends token
+        const token = jwt.sign({_id: user._id}, process.env.TOKEN_SECRET)
+        res.header("auth-token", token).send(token)
     } catch(err){
         res.status(400).send(err)
     }
@@ -40,6 +46,7 @@ router.post("/register", async (req, res) => {
 
 //Login in as user in DB
 router.post("/login", async (req, res) => {
+    console.log(req)
     //validate the user data
     const {error} = loginValidation(req.body)
     if(error) return res.status(400).send(error.details[0].message)
@@ -55,6 +62,75 @@ router.post("/login", async (req, res) => {
     //Sends token
     const token = jwt.sign({_id: user._id}, process.env.TOKEN_SECRET)
     res.header("auth-token", token).send(token)
+})
+//Get user infos
+router.get("/infos", verify, async (req, res) => {
+    try{
+        console.log(req)
+        //Gets user
+        const user = await User.findById(req.user)
+
+        //Creates object with infos
+        const userInfos = {
+            bios: user.bios,
+            username: user.username,
+            email: user.email
+        }
+
+        //Sends json
+        res.json(userInfos)
+        console.log(res)
+    } catch(err){
+        res.status(400).send(err)
+    }
+})
+
+//Get user myForums
+router.get("/myForums", verify, async (req, res) => {
+    try{
+        //Gets user
+        const user = await User.findById(req.user)
+
+        //Gets myForums
+        const userForums = user.myForums
+
+        //Sends json
+        res.json(userForums)
+    } catch(err){
+        res.status(400).send(err)
+    }
+})
+
+//Get user myChat
+router.get("/myChat", verify, async (req, res) => {
+    try{
+        //Gets user
+        const user = await User.findById(req.user)
+
+        //Gets myChat
+        const userChat = user.myChat
+
+        //Sends json
+        res.json(userChat)
+    } catch(err){
+        res.status(400).send(err)
+    }
+})
+
+//Get user myInvites
+router.get("/myInvites", verify, async (req, res) => {
+    try{
+        //Gets user
+        const user = await User.findById(req.user)
+
+        //Gets myInvites
+        const userInvites = user.myInvites
+
+        //Sends json
+        res.json(userInvites)
+    } catch(err){
+        res.status(400).send(err)
+    }
 })
 
 module.exports = router

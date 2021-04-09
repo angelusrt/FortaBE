@@ -6,7 +6,7 @@ const { createInvites } = require("./invites")
 const Group = require("../models/Group")
 
 //Creates Group
-router.post("/", verify, (req, res) => {
+router.post("/", verify, async (req, res) => {
     try {
         //Creates group
         const group = new Group({
@@ -264,7 +264,7 @@ router.delete("/:groupId/messages/:messageId", verify, async (req, res) => {
 })
 
 //Deletes group
-router.delete("/", verify, (req, res) => {
+router.delete("/", verify, async (req, res) => {
     try {
         //Gets group
         const group = await Group.findById(req.params.groupId)
@@ -284,3 +284,5 @@ router.delete("/", verify, (req, res) => {
         res.status(400).send(err)
     }
 })
+
+module.exports = router
