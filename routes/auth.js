@@ -63,15 +63,17 @@ router.post("/login", async (req, res) => {
     const token = jwt.sign({_id: user._id}, process.env.TOKEN_SECRET)
     res.header("auth-token", token).send(token)
 })
+
 //Get user infos
 router.get("/infos", verify, async (req, res) => {
     try{
-        console.log(req)
+        //console.log(req)
         //Gets user
         const user = await User.findById(req.user)
 
         //Creates object with infos
         const userInfos = {
+            id: req.user.toString(),
             bios: user.bios,
             username: user.username,
             email: user.email
@@ -79,7 +81,7 @@ router.get("/infos", verify, async (req, res) => {
 
         //Sends json
         res.json(userInfos)
-        console.log(res)
+        //console.log(res)
     } catch(err){
         res.status(400).send(err)
     }
@@ -110,6 +112,7 @@ router.get("/myChat", verify, async (req, res) => {
         //Gets myChat
         const userChat = user.myChat
 
+        //console.log(userChat)
         //Sends json
         res.json(userChat)
     } catch(err){

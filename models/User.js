@@ -40,7 +40,7 @@ const userSchema = new Schema({
     }],
     myInvites: [{
         type: SchemaTypes.ObjectId,
-        ref: 'Invites'
+        ref: 'Invite'
     }]
 
 })

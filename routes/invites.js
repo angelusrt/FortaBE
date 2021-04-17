@@ -19,13 +19,16 @@ async function createInvites(sender, receiver, description, path){
             description,
             path
         })
-        
-        //Saves invite
-        invite.save()
 
         //Sends invite
         userSender.myInvites.push(invite.id)
         userReceiver.myInvites.push(invite.id)
+
+        //Saves invite
+        invite.save()
+        userReceiver.save()
+        userSender.save()
+
     } catch (err) {
         return err
     }
@@ -49,9 +52,9 @@ router.delete("/:inviteId", verify, async (req, res) => {
     try {    
         //Gets invite
         const invite = await Invite.findById(req.params.inviteId)
-
+        
         //Verify permission
-        if(req.user !== (invite.sender.toString() || invite.receiver.toString()))
+        if(req.user !== (invite.sender.toString() && invite.receiver.toString()))
             return res.status(401).send("Action denied, you don't have permission")
 
         //Gets users
