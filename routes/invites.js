@@ -35,7 +35,7 @@ async function createInvites(sender, receiver, description, path){
 }
 
 //Gets invite
-router.get("/:inviteId", async(req, res) => {
+router.get("/:inviteId", verify, async(req, res) => {
     try{
         //Gets invite
         const invite = await Invite.findById(req.params.inviteId)

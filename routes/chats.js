@@ -6,6 +6,24 @@ const { createInvites } = require("./invites")
 const User = require("../models/User")
 const Chat = require("../models/Chat")
 
+
+//Gets users that mach name
+router.get("/find/:username", async(req, res) => {
+    try{
+        //Gets the users
+        const user = await User.find({username: { '$regex': req.params.username, '$options': 'i' }})
+        const userFiltered = user.map(data => {
+            return {username: data.username, bios: data.bios}    
+        })
+        console.log(userFiltered)
+
+        //Sends its
+        res.json(userFiltered)
+    } catch(err){
+        res.status(400).send(err)
+    }
+})
+
 //Creates Chat
 router.post("/", verify, async (req, res) => {
     try {
@@ -49,15 +67,11 @@ router.get("/:chatId", verify, async (req, res) => {
         //Gets Chat
         const chat = await Chat.findById(req.params.chatId)
 
-        console.log("2 " + req.user + " " + chat)
-        // console.log(chat.members.map(user => user.member.toString())
-        // .filter(user => user === req.user))
         //verify permission
         if(req.user !== chat.members.map(user => user.member.toString())
         .filter(user => user === req.user)[0])
             return res.status(401).send("Action denied, you don't have permission")
-        
-        console.log("1 " + req.user + " " + chat)
+
         //Sends it
         res.json(chat)
     } catch (err) {
@@ -72,7 +86,6 @@ router.patch("/:chatId", verify, async (req, res) => {
         const chat = await Chat.findById(req.params.chatId)
         const chatUser = chat.members.filter(user => user.member.toString() === req.user)
         
-        console.log(chatUser[0].member)
         //verify permission
         if( req.user !== chatUser[0].member.toString() && chatUser[0].stats !== "pendent" )
             return res.status(401).send("Action denied, you don't have permission")
@@ -82,7 +95,6 @@ router.patch("/:chatId", verify, async (req, res) => {
 
         //Saves and sends message
         chat.save()
-        //console.log(chatUser.stats)
         res.send("Updated")
     } catch (err) {
         res.status(400).send(err)

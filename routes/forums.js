@@ -9,23 +9,44 @@ const Post = require("../models/Post")
 const Comentaries = require("../models/Comentaries")
 const User = require("../models/User")
 
-//Submits a forum ✓
-router.post("/", verify, (req, res) => {
-    //Creates the forum
-    const forum = new Forum({
-        groupName: req.body.groupName,
-        bios: req.body.bios,
-        tags: req.body.tags,
-        owner: req.user
-    })
-
-    //Saves it
-    forum.save()
-    .then( data => {
-        res.json(data)
-    }).catch( err => {
+//Gets forums that mach name
+router.get("/find/:groupName", async(req, res) => {
+    try{
+        //Gets the forum
+        const forum = await Forum.find({groupName: { '$regex': req.params.groupName, '$options': 'i' }})
+        console.log(forum)
+        //Sends its
+        res.json(forum)
+    } catch(err){
         res.status(400).send(err)
-    })
+    }
+})
+
+//Submits a forum ✓
+router.post("/", verify, async (req, res) => {
+    try {
+        const user = await User.findById(req.user)
+
+        //Creates the forum
+        const forum = new Forum({
+            groupName: req.body.groupName,
+            bios: req.body.bios,
+            tags: req.body.tags,
+            owner: req.user
+        })
+
+        //Pushes into owner forum list
+        user.myForums.push(forum._id)
+        console.log(forum)
+        //Saves it
+        forum.save()
+        user.save()
+
+        //Sends id
+        res.json(forum._id)
+    } catch (err) {
+        res.status(400).send(err)
+    }
 })
 
 //Gets forum ✓
@@ -202,7 +223,7 @@ router.post("/:forumId/posts/", verify, async (req, res) => {
         //Saves it and sends it
         forum.posts.push(post)
         forum.save()
-        res.json(post)
+        res.json(post._id)
     } catch (err) {
         res.status(400).send(err)
     }

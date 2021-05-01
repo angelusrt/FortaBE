@@ -42,7 +42,6 @@ const userSchema = new Schema({
         type: SchemaTypes.ObjectId,
         ref: 'Invite'
     }]
-
 })
 
 module.exports = mongoose.model('User', userSchema)
