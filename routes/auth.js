@@ -12,19 +12,19 @@ const { registerValidation, loginValidation } = require("../validation")
 //Registering user in DB
 router.post("/register", async (req, res) => {    
     try{
-        //validate the user data
+        //validates the user data
         const {error} = registerValidation(req.body)
-        if(error) return res.status(400).send(error.details[0].message)
+        if(error) return res.status(400).json(error.details[0].message)
         
-        //checking user uniqueness
+        //checks user uniqueness
         const emailExist = await User.findOne({email: req.body.email})
-        if (emailExist) return res.status(400).send("Email already exists")
+        if (emailExist) return res.status(400).json("Email already exists")
 
-        //Hash Password
+        //Hashes Password
         const salt = await bcrypt.genSalt()
         const hashedPassword = await bcrypt.hash(req.body.password, salt)
 
-        //create new user
+        //creates new user
         const user = new User({
             username: req.body.username,
             email: req.body.email,
@@ -32,42 +32,41 @@ router.post("/register", async (req, res) => {
             bios: req.body.bios
         })
         
-        //Save user
-        const savedUser = await user.save()
-        //res.send(savedUser)
+        //Saves user
+        user.save()
 
         //Sends token
         const token = jwt.sign({_id: user._id}, process.env.TOKEN_SECRET)
-        res.header("auth-token", token).send(token)
+        res.header("auth-token", token).json(token)
     } catch(err){
-        res.status(400).send(err)
+        res.status(400).json(err)
     }
 })
 
-//Login in as user in DB
+//Login as user in DB
 router.post("/login", async (req, res) => {
-    console.log(req)
-    //validate the user data
-    const {error} = loginValidation(req.body)
-    if(error) return res.status(400).send(error.details[0].message)
     
-    //checking if user exists
+    //validates the user data
+    const {error} = loginValidation(req.body)
+    if(error) return res.status(400).json(error.details[0].message)
+    
+    //checks if user exists
     const user = await User.findOne({email: req.body.email})
-    if (!user) return res.status(400).send("Email doesn't exist")
+    if (!user) return res.status(400).json("Email doesn't exist")
 
-    //Authenticate Password
+    //Authenticates Password
     const authPass = await bcrypt.compare(req.body.password, user.password)
-    if(!authPass) return res.status(400).send("Invalid Password")
+    if(!authPass) return res.status(400).json("Invalid Password")
 
     //Sends token
     const token = jwt.sign({_id: user._id}, process.env.TOKEN_SECRET)
-    res.header("auth-token", token).send(token)
+    res.header("auth-token", token).json(token)
 })
 
-//Get user infos
+//Gets user infos
 router.get("/infos", verify, async (req, res) => {
     try{
-        //console.log(req)
+        
         //Gets user
         const user = await User.findById(req.user)
 
@@ -81,9 +80,8 @@ router.get("/infos", verify, async (req, res) => {
 
         //Sends json
         res.json(userInfos)
-        //console.log(res)
     } catch(err){
-        res.status(400).send(err)
+        res.status(400).json(err)
     }
 })
 
@@ -99,7 +97,7 @@ router.get("/myForums", verify, async (req, res) => {
         //Sends json
         res.json(userForums)
     } catch(err){
-        res.status(400).send(err)
+        res.status(400).json(err)
     }
 })
 
@@ -112,15 +110,14 @@ router.get("/myChat", verify, async (req, res) => {
         //Gets myChat
         const userChat = user.myChat
 
-        //console.log(userChat)
         //Sends json
         res.json(userChat)
     } catch(err){
-        res.status(400).send(err)
+        res.status(400).json(err)
     }
 })
 
-//Get user myInvites
+//Gets user myInvites
 router.get("/myInvites", verify, async (req, res) => {
     try{
         //Gets user
@@ -132,7 +129,96 @@ router.get("/myInvites", verify, async (req, res) => {
         //Sends json
         res.json(userInvites)
     } catch(err){
-        res.status(400).send(err)
+        res.status(400).json(err)
+    }
+})
+
+//Patches username
+router.patch("/username", verify, async (req, res) => {
+    try{
+        //Gets user
+        const user = await User.findById(req.user)
+
+        //Updates username
+        user.username = req.body.username
+
+        //Saves changes and sends message
+        user.save()
+        res.json("Updated")
+    } catch(err){
+        res.status(400).json(err)
+    }
+})
+
+//Patches bios
+router.patch("/bios", verify, async (req, res) => {
+    try{
+        //Gets user
+        const user = await User.findById(req.user)
+
+        //Updates bios
+        user.bios = req.body.bios
+
+        //Saves changes and sends message
+        user.save()
+        res.json("Updated")
+    } catch(err){
+        res.status(400).json(err)
+    }
+})
+
+//Patches email
+router.patch("/email", verify, async (req, res) => {
+    try{
+        //Gets user
+        const user = await User.findById(req.user)
+        const emailExist = await User.findOne({email: req.body.email})
+
+        //Checks if email is not in use and updates it
+        if(emailExist === null){
+            user.email = req.body.email   
+        }
+
+        //Saves changes and sends message
+        user.save()
+        res.json("Updated")
+    } catch(err){
+        res.status(400).json(err)
+    }
+})
+
+//Patches password
+router.patch("/password", verify, async (req, res) => {
+    try{
+        //Gets user
+        const user = await User.findById(req.user)
+
+        //Hash Password
+        const salt = await bcrypt.genSalt()
+        const hashedPassword = await bcrypt.hash(req.body.password, salt)
+
+        //Updates password
+        user.password = hashedPassword
+
+        //Saves changes and sends message
+        user.save()
+        res.json("Updated")
+    } catch(err){
+        res.status(400).json(err)
+    }
+})
+
+//Deletes user
+router.delete("/user", verify, async (req, res) => {
+    try{
+        //Gets user
+        const user = await User.findById(req.user)
+
+        //Saves changes and sends message
+        user.remove()
+        res.json("Removed")
+    } catch(err){
+        res.status(400).json(err)
     }
 })
 

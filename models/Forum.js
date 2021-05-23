@@ -36,6 +36,27 @@ const forumSchema = new Schema({
         },
         stats: Boolean 
     }],
+    rules: {
+        type: String,
+        max: 1024
+    },
+    flags: [{
+        isItPost: {
+            type: Boolean
+        },
+        id: {
+            type: SchemaTypes.ObjectId,
+            ref: this.isItPost ? 'Post' : 'Comentaries' 
+        },
+        sender: {
+            type: SchemaTypes.ObjectId,
+            ref: 'User'
+        },
+        message: {
+            type: String,
+            max: 128
+        }
+    }],
     posts: [postSchema]
 })
 

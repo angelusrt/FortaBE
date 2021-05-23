@@ -34,6 +34,33 @@ async function createInvites(sender, receiver, description, path){
     }
 }
 
+//Deletes invites and sends it 
+async function removeInvites(sender, receiver, description, path, inviteId){
+    try {
+        //Gets users
+        const userSender = await User.findById(sender)
+        const userReceiver = await User.findById(receiver)
+        const invite = await Invite.findById(inviteId)
+
+        //removes thing
+        
+        //Removes it 
+        userSender.myInvites = [
+            ...userSender.myInvites.filter(item => item === inviteId)
+        ]
+        userReceiver.myInvites = [
+            ...userReceiver.myInvites.filter(item => item === inviteId)
+        ]
+
+        //Saves users and removes invite
+        userReceiver.save()
+        userSender.save()
+        invite.remove()
+    } catch (err) {
+        return err
+    }
+}
+
 //Gets invite
 router.get("/:inviteId", verify, async(req, res) => {
     try{
@@ -43,7 +70,7 @@ router.get("/:inviteId", verify, async(req, res) => {
         //Sends it
         res.json(invite)
     } catch(err){
-        res.status(400).send(err)
+        res.status(400).json(err)
     }
 })
 
@@ -54,8 +81,8 @@ router.delete("/:inviteId", verify, async (req, res) => {
         const invite = await Invite.findById(req.params.inviteId)
         
         //Verify permission
-        if(req.user !== (invite.sender.toString() && invite.receiver.toString()))
-            return res.status(401).send("Action denied, you don't have permission")
+        if(req.user !== invite.sender.toString() && req.user !== invite.receiver.toString())
+            return res.status(401).json("Action denied, you don't have permission")
 
         //Gets users
         const userSender = await User.findById(invite.sender)
@@ -63,20 +90,20 @@ router.delete("/:inviteId", verify, async (req, res) => {
 
         //Removes it 
         userSender.myInvites = [
-            ...userSender.myInvites.filter(item => item === req.params.inviteId)
+            ...userSender.myInvites.filter(item => item !== req.params.inviteId)
         ]
         userReceiver.myInvites = [
-            ...userReceiver.myInvites.filter(item => item === req.params.inviteId)
+            ...userReceiver.myInvites.filter(item => item !== req.params.inviteId)
         ]
-        invite.remove()
         
         //Saves and Sends message
         userSender.save()
         userReceiver.save()
-        invite.save()
-        res.send("Deleted sucessfully")
+        invite.remove()
+        //invite.save()
+        res.json("Removed")
     } catch (err) {
-        res.status(400).send(err)
+        res.status(400).json(err)
     }
 })
 

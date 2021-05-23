@@ -13,23 +13,25 @@ router.get("/find/:username", async(req, res) => {
         //Gets the users
         const user = await User.find({username: { '$regex': req.params.username, '$options': 'i' }})
         const userFiltered = user.map(data => {
-            return {username: data.username, bios: data.bios}    
+            return {username: data.username, bios: data.bios, id: data._id}    
         })
         console.log(userFiltered)
 
         //Sends its
         res.json(userFiltered)
     } catch(err){
-        res.status(400).send(err)
+        res.status(400).json(err)
     }
 })
 
 //Creates Chat
 router.post("/", verify, async (req, res) => {
     try {
+        console.log("a")
         const sender = await User.findById(req.user)
         const receiver = await User.findById(req.body.user)
-
+        console.log(sender)
+        console.log(receiver)
         //Creates chat
         const chat = new Chat({
             members: [
@@ -46,18 +48,14 @@ router.post("/", verify, async (req, res) => {
 
         //Creates invite and sends it
         createInvites(req.user, req.body.user, "chat", chat.id)
-
-        //Adds chat to sender
-        sender.myChat.push(chat._id)
-        receiver.myChat.push(chat._id)
         
         //Saves it and sends message
         chat.save()
         sender.save()
         receiver.save()
-        res.send("Invited")
+        res.json("Invited")
     } catch (err) {
-        res.status(400).send(err)
+        res.status(400).json(err)
     }
 })
 
@@ -70,12 +68,12 @@ router.get("/:chatId", verify, async (req, res) => {
         //verify permission
         if(req.user !== chat.members.map(user => user.member.toString())
         .filter(user => user === req.user)[0])
-            return res.status(401).send("Action denied, you don't have permission")
+            return res.status(401).json("Action denied, you don't have permission")
 
         //Sends it
         res.json(chat)
     } catch (err) {
-        res.status(400).send(err)
+        res.status(400).json(err)
     }
 })
 
@@ -85,19 +83,25 @@ router.patch("/:chatId", verify, async (req, res) => {
         //Gets Chat
         const chat = await Chat.findById(req.params.chatId)
         const chatUser = chat.members.filter(user => user.member.toString() === req.user)
+        const sender = await User.findById(chat.members[0].member)
+        const receiver = await User.findById(chat.members[1].member)
         
         //verify permission
         if( req.user !== chatUser[0].member.toString() && chatUser[0].stats !== "pendent" )
-            return res.status(401).send("Action denied, you don't have permission")
+            return res.status(401).json("Action denied, you don't have permission")
         
         //Update permission
         chatUser[0].stats = "nU"
 
+        //Adds chat to sender and receiver
+        sender.myChat.push(chat._id)
+        receiver.myChat.push(chat._id)
+
         //Saves and sends message
         chat.save()
-        res.send("Updated")
+        res.json("Updated")
     } catch (err) {
-        res.status(400).send(err)
+        res.status(400).json(err)
     }
 })
 
@@ -110,7 +114,7 @@ router.post("/:chatId/messages", verify, async (req, res) => {
 
         //verify permission
         if(req.user !== chatUser[0].member.toString())
-            return res.status(401).send("Action denied, you don't have permission") 
+            return res.status(401).json("Action denied, you don't have permission") 
 
         //Create message
         const message = {
@@ -123,9 +127,9 @@ router.post("/:chatId/messages", verify, async (req, res) => {
 
         //Saves it and sends it
         chat.save()
-        res.send("Sent")
+        res.json("Sent")
     } catch (err) {
-        res.status(400).send(err)
+        res.status(400).json(err)
     }
 })
  
@@ -139,16 +143,16 @@ router.patch("/:chatId/messages/:messageId", verify, async (req, res) => {
 
         //verify permission
         if(req.user !== chatUser.member.toString())
-            return res.status(401).send("Action denied, you don't have permission") 
+            return res.status(401).json("Action denied, you don't have permission") 
 
         //Updates message
         message.message = req.body.message
 
         //Saves it and sends it
         chat.save()
-        res.send("Updated")
+        res.json("Updated")
     } catch (err) {
-        res.status(400).send(err)
+        res.status(400).json(err)
     }
 })
 
@@ -161,7 +165,7 @@ router.delete("/:chatId/messages/:messageId", verify, async (req, res) => {
 
         //verify permission
         if(req.user !== chatUser.member.toString())
-            return res.status(401).send("Action denied, you don't have permission") 
+            return res.status(401).json("Action denied, you don't have permission") 
 
         //Updates message
         chat.messages = [
@@ -170,31 +174,41 @@ router.delete("/:chatId/messages/:messageId", verify, async (req, res) => {
 
         //Saves it and sends it
         chat.save()
-        res.send("Deleted")
+        res.json("Deleted")
     } catch (err) {
-        res.status(400).send(err)
+        res.status(400).json(err)
     }
 })
 
 //Deletes Chat
-router.delete("/", verify, async (req, res) => {
+router.delete("/:chatId", verify, async (req, res) => {
     try {
         //Gets chat
         const chat = await Chat.findById(req.params.chatId)
-        const chatUser = chat.members.filter(user => user.member.toString() !== req.user)
+        const chatUser = chat.members.filter(user => user.member.toString() === req.user)
+
+        const userSender = await User.findById(chat.members[0].member)
+        const userReceiver = await User.findById(chat.members[1].member)
 
         //verify permission
-        if(req.user !== chatUser.member.toString())
-            return res.status(401).send("Action denied, you don't have permission") 
+        if(req.user !== chatUser[0].member.toString())
+            return res.status(401).json("Action denied, you don't have permission") 
 
-        //Updates message
+        //Remove from list of users
+        userSender.myChat = [
+            ...userSender.myChat.filter(item => item._id.toString() !== req.params.chatId)
+        ]
+        userReceiver.myChat = [
+            ...userReceiver.myChat.filter(item => item._id.toString() !== req.params.chatId)
+        ]
+
+        //Saves it, removes chat and sends it
+        userSender.save()
+        userReceiver.save()
         chat.remove()
-
-        //Saves it and sends it
-        chat.save()
-        res.send("Removed")
+        res.json("Removed")
     } catch (err) {
-        res.status(400).send(err)
+        res.status(400).json(err)
     }
 })
 

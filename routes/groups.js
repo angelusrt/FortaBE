@@ -122,7 +122,7 @@ router.delete("/:groupId/pendent", verify, async (req, res) => {
 
         //Saves and sends message
         group.save()    
-        res.send("Updated")
+        res.send("Removed")
     } catch (err) {
         res.status(400).send(err)
     }

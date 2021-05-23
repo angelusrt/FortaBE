@@ -26,8 +26,7 @@ const comentariesSchema = new Schema({
     date: { 
         type: Date, 
         default: Date.now 
-    },
-    comentaries: [this]
+    }
 })
 
 module.exports = mongoose.model('Comentaries', comentariesSchema)
