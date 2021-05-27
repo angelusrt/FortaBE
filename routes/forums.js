@@ -200,14 +200,74 @@ router.delete("/:forumId/mods", verify, async (req, res) => {
     }
 })
 
-//Gets flags 
+//Gets flags info  
 router.get("/:forumId/flags", async(req, res) => {
     try{
         //Gets forum
         const forum = await Forum.findById(req.params.forumId)
 
+        //creates flags object to send
+        const flags = {
+            flags: [
+                ...forum.flags.map(flag => { return {
+                    isItPost: flag.isItPost,
+                    post: flag.post,
+                    comentaries: flag.isItPost ? "" : flag.comentaries 
+                }})
+            ], 
+            owner: forum.owner, 
+            mods: forum.mods
+        }
+
         //Sends flags
-        res.json(forum.flags)
+        res.json(flags)
+    } catch(err){
+        res.status(400).json(err)
+    }
+})
+
+//Gets flags flag  
+router.get("/:forumId/flags/:postId", async(req, res) => {
+    try{
+        //Gets forum and flags
+        const forum = await Forum.findById(req.params.forumId)
+        const flags = forum.flags.find(flag => (
+            flag.isItPost === true && flag.post == req.params.postId
+        ))
+        console.log(flags)
+        //creates flags object to send
+        const flag = {
+            flags: flags.flags, 
+            owner: forum.owner, 
+            mods: forum.mods
+        }
+
+        //Sends flags
+        res.json(flag)
+    } catch(err){
+        res.status(400).json(err)
+    }
+})
+
+//Gets flags flag  
+router.get("/:forumId/flags/:postId/:comentaryId", async(req, res) => {
+    try{
+        //Gets forum and flags
+        const forum = await Forum.findById(req.params.forumId)
+        const flags = forum.flags.find(flag => {
+            return flag.isItPost === false && flag.post == req.params.postId &&
+            flag.comentaries == req.params.comentaryId
+        })
+
+        //creates flags object to send
+        const flag = {
+            flags: flags.flags, 
+            owner: forum.owner, 
+            mods: forum.mods
+        }
+
+        //Sends flags
+        res.json(flag)
     } catch(err){
         res.status(400).json(err)
     }
@@ -216,25 +276,52 @@ router.get("/:forumId/flags", async(req, res) => {
 //Posts flag 
 router.post("/:forumId/flags", verify, async (req, res) => {
     try {    
-        //Gets the forum
+        //Gets forum
         const forum = await Forum.findById(req.params.forumId)
 
         //Creates flag
         const flag = {
-            isItPost: req.body.isItPost,
-            id: req.body.id,
             sender: req.user,
             message: req.body.message
         }
         
-        //Posts flag
-        forum.flags.push(flag)
+        //Gets flags
+        let flags, flagInfo
+        
+        if(req.body.isItPost) {            
+            flags = forum.flags.find(flag => {
+                return flag.isItPost === req.body.isItPost && flag.post == req.body.post
+            })
+            
+            //Creates flags info
+            flagInfo = {
+                isItPost: req.body.isItPost,
+                post: req.body.post,
+                flags: [flag]
+            }
+        } else {
+            flags = forum.flags.find(flag => {
+                return flag.isItPost === req.body.isItPost && flag.post == req.body.post &&
+                flag.comentaries == req.body.comentaries
+            })
 
+            //Creates flags info
+            flagInfo = {
+                isItPost: req.body.isItPost,
+                post: req.body.post,
+                comentaries: req.body.comentaries,
+                flags: [flag]
+            }
+        }
+
+        //Posts flag info
+        flags == null ? forum.flags.push(flagInfo) : flags.flags.push(flag)
+        
         //Saves and sends
         forum.save()
         res.json("Updated")
     } catch (err) {
-        res.status(400).sends(err)
+        res.status(400).json(err)
     }
 })
 
@@ -243,9 +330,23 @@ router.get("/:forumId/flags/verify", verify, async(req, res) => {
     try{
         //Gets forum and flag
         const forum = await Forum.findById(req.params.forumId)
-        const flag = await forum.flags.findOne({id: req.body.id, sender: req.user})
+
+        //Gets dynamically flags
+        let flags
+        
+        req.body.isItPost ?
+        flags = forum.flags.find(flag => {
+            return flag.isItPost === req.body.isItPost && flag.post == req.body.post
+        }) :
+        flags = forum.flags.find(flag => {
+            return flag.isItPost === req.body.isItPost && flag.post == req.body.post &&
+            flag.comentaries == req.body.comentaries
+        })
+
+        //Gets flags object
+        const flag = flags.flags.find(flag => flag.sender.toString() === req.user)
         console.log(flag)
-        //Sends flags
+        //Sends is it is available
         res.json(flag == null ? "Available" : "Flagged")
     } catch(err){
         res.status(400).json(err)
@@ -257,13 +358,26 @@ router.patch("/:forumId/flags", verify, async (req, res) => {
     try {    
         //Gets the forum
         const forum = await Forum.findById(req.params.forumId)
-        const flag = await forum.flags.findOne({id: req.body.id, sender: req.user})
+
+        //Gets dynamically flags
+        let flags
+
+        req.body.isItPost ?
+        flags = forum.flags.find(flag => {
+            return flag.isItPost === req.body.isItPost && flag.post == req.body.post
+        }) :
+        flags = forum.flags.find(flag => {
+            return flag.isItPost === req.body.isItPost && flag.post == req.body.post &&
+            flag.comentaries == req.body.comentaries
+        })
+
+        //Gets flags object
+        const flag = flags.flags.find(flag => flag.sender.toString() === req.user)
         
         //Updates flag
         flag.message = req.body.message
 
         //Saves and sends
-        flag.save()
         forum.save()
         res.json("Updated")
     } catch (err) {
@@ -272,25 +386,67 @@ router.patch("/:forumId/flags", verify, async (req, res) => {
 })
 
 //Deletes flag 
-router.delete("/:forumId/flags", verify, async (req, res) => {
-    try {    
+router.delete("/:forumId/flags/:isItPost/:post/:comentary/:sender", verify, async (req, res) => {
+    try {   
         //Gets the forum
         const forum = await Forum.findById(req.params.forumId)
-        const flag = await forum.flags.findOne({id: req.body.id, sender: req.user})
-
+        
+        //Gets dynamically flags
+        let flags, flag
+        
+        req.params.isItPost === "true" ?
+        flags = forum.flags.find(flag => (
+            flag.isItPost.toString() === req.params.isItPost && 
+            flag.post.toString() === req.params.post
+        )) :
+        flags = forum.flags.find(flag => (
+            flag.isItPost === req.params.isItPost && flag.post.toString() == req.params.post &&
+            flag.comentaries.toString() == req.params.comentary
+        ))
+        
+        //Gets flags object
+        req.params.sender === "0" ? 
+        flag = flags.flags.find(flag => flag.sender.toString() === req.user) :
+        flag = flags.flags.find(flag => flag.sender.toString() === req.params.sender)
+        
         //Verify permission
         if( req.user !== forum.owner.toString() && 
             req.user !== forum.mods.map(item => item.mod.toString()) &&
-            req.user !== flag.sender
+            req.user !== flag.sender.toString()
         )
             return res.status(401).json("Action denied, you don't have permission")
         
-        //Saves and sends
+        //Removes flag
         flag.remove()
+        flags.flags = [
+            ...flags.flags.filter(flag => flag.sender.toString() !== req.user)
+        ]
+        
+        //Deletes the flag info if flag is the final one
+        if(flags.flags.length === 0){
+            if(req.params.isItPost.toString() === "true") {
+                forum.flags = [
+                    ...forum.flags.filter(flag => (
+                        flag.isItPost !== req.params.isItPost && 
+                        flag.post != req.params.post 
+                    ))
+                ]
+            } else {
+                forum.flags = [
+                    ...forum.flags.filter(flag => (
+                        flag.isItPost !== req.params.isItPost && 
+                        flag.post != req.params.post &&
+                        flag.comentaries != req.params.comentary 
+                    ))
+                ]
+            }
+        }
+        
+        //Saves and sends
         forum.save()
-        res.json("Updated")
+        res.json("Removed")
     } catch (err) {
-        res.status(400).sends(err)
+        res.status(400).json(err)
     }
 })
 
@@ -402,10 +558,16 @@ router.get("/:forumId/posts/:postId", async(req, res) => {
         const forum = await Forum.findById(req.params.forumId)
         const post = await forum.posts.id(req.params.postId)
 
-        console.log(post)
+
+        //creates object to send
+        const obj = {
+            owner: forum.owner,
+            mods: forum.mods,
+            post: post
+        }
 
         //Sends it
-        res.json(post)
+        res.json(obj)
     } catch(err){
         res.status(400).json(err)
     }
@@ -491,8 +653,15 @@ router.get("/:forumId/posts/:postId/comentaries/:comentaryId", async(req, res) =
         const post = forum.posts.id(req.params.postId) 
         const comentary = post.comentaries.id(req.params.comentaryId)
         
+        //Creates object to send
+        const obj = {
+            owner: forum.owner,
+            mods: forum.mods,
+            comentary: comentary
+        }
+
         //Sends it
-        res.json(comentary)
+        res.json(obj)
     } catch(err){
         res.status(400).json(err)
     }
