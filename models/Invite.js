@@ -20,9 +20,9 @@ const inviteSchema = new Schema({
         type: SchemaTypes.ObjectId,
         required: false,
         ref: doc => { 
-                doc.description === "mod"? "Forum":
-                doc.description === "chat"? "Chat":
-                "Group"
+            doc.description === "mod"? "Forum":
+            doc.description === "chat"? "Chat":
+            "Group"
         }
     }
 })

@@ -66,7 +66,6 @@ router.post("/login", async (req, res) => {
 //Gets user infos
 router.get("/infos", verify, async (req, res) => {
     try{
-        
         //Gets user
         const user = await User.findById(req.user)
 

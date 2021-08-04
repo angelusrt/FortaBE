@@ -145,7 +145,7 @@ router.patch("/:forumId/mods", verify, async (req, res) => {
 
         //Saves and sends
         forum.save()
-        res.json("Added")
+        res.json("Updated")
     } catch (err) {
         res.status(400).json(err)
     }
@@ -163,7 +163,7 @@ router.patch("/:forumId/mods", verify, async (req, res) => {
         
         //Saves and sends
         forum.save()
-        res.json("Added")
+        res.json("Updated")
     } catch (err) {
         res.status(400).json(err)
     }
@@ -387,7 +387,7 @@ router.patch("/:forumId/flags", verify, async (req, res) => {
 
 //Deletes flag 
 router.delete("/:forumId/flags/:isItPost/:post/:comentary/:sender", verify, async (req, res) => {
-    try {   
+    try {
         //Gets the forum
         const forum = await Forum.findById(req.params.forumId)
         
@@ -400,14 +400,16 @@ router.delete("/:forumId/flags/:isItPost/:post/:comentary/:sender", verify, asyn
             flag.post.toString() === req.params.post
         )) :
         flags = forum.flags.find(flag => (
-            flag.isItPost === req.params.isItPost && flag.post.toString() == req.params.post &&
-            flag.comentaries.toString() == req.params.comentary
+            flag.isItPost.toString() === req.params.isItPost && 
+            flag.post.toString() === req.params.post &&
+            flag.comentaries.toString() === req.params.comentary
         ))
         
         //Gets flags object
         req.params.sender === "0" ? 
         flag = flags.flags.find(flag => flag.sender.toString() === req.user) :
         flag = flags.flags.find(flag => flag.sender.toString() === req.params.sender)
+        
         
         //Verify permission
         if( req.user !== forum.owner.toString() && 
@@ -518,8 +520,17 @@ router.delete("/:forumId",verify, async (req, res) => {
             user.save()
         }
 
+        //Removes it from owner user
+        const user = await User.findById(forum.owner)
+        user.myForums = [
+            ...user.myForums.filter(item => item.toString() !== req.params.forumId)
+        ]
+
         //Removes it
         forum.remove()
+
+        //Saves it
+        user.save()
 
         //Sends 
         res.json("Removed")
@@ -610,6 +621,13 @@ router.delete("/:forumId/posts/:postId", verify, async (req, res) => {
             req.user !== forum.mods.map(item => item.mod.toString())
         )
             return res.status(401).json("Action denied, you don't have permission")
+
+        //Removes flags
+        forum.flags = [
+            ...forum.flags.filter(flag => (
+                flag.post.toString() !== req.params.postId
+            ))
+        ]
 
         //Removes it
         post.remove()
@@ -705,6 +723,17 @@ router.delete("/:forumId/posts/:postId/comentaries/:comentaryId", verify, async 
             req.user !== forum.mods.map(item => item.mod.toString())
         )
             return res.status(401).json("Action denied, you don't have permission")
+
+        //Removes flags
+        forum.flags = [
+            ...forum.flags.filter(flag => (
+                flag.isItPost !== false &&
+                (
+                    flag.isItPost === false &&
+                    flag.comentaries.toString() !== req.params.comentaryId
+                ) 
+            ))
+        ]
 
         //Removes comentary
         comentary.remove()

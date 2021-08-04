@@ -90,17 +90,16 @@ router.delete("/:inviteId", verify, async (req, res) => {
 
         //Removes it 
         userSender.myInvites = [
-            ...userSender.myInvites.filter(item => item !== req.params.inviteId)
+            ...userSender.myInvites.filter(item => item.toString() !== req.params.inviteId)
         ]
         userReceiver.myInvites = [
-            ...userReceiver.myInvites.filter(item => item !== req.params.inviteId)
+            ...userReceiver.myInvites.filter(item => item.toString() !== req.params.inviteId)
         ]
         
         //Saves and Sends message
         userSender.save()
         userReceiver.save()
         invite.remove()
-        //invite.save()
         res.json("Removed")
     } catch (err) {
         res.status(400).json(err)
