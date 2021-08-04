@@ -9,6 +9,8 @@ const app = express()
 //Get enviroment variable
 dotenv.config()
 
+console.log(process.env.DB_CONNECT)
+
 //Connect to DB
 mongoose.connect(
     process.env.DB_CONNECT, 
