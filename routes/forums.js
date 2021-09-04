@@ -120,7 +120,7 @@ router.patch("/:forumId/rules", verify, async (req, res) => {
 })
 
 //Add mod to forum ✓
-router.patch("/:forumId/mods", verify, async (req, res) => {
+router.post("/:forumId/mods", verify, async (req, res) => {
     try {    
         //Gets forum
         const forum = await Forum.findById(req.params.forumId)
@@ -156,7 +156,7 @@ router.patch("/:forumId/mods", verify, async (req, res) => {
     try {    
         //Gets forum
         const forum = await Forum.findById(req.params.forumId)
-        const mod = await forum.mods.findOne({mods: req.user})
+        const mod = await forum.mods.findOne({mod: req.user})
 
         //Updates the mod collection
         mod.stats = true
