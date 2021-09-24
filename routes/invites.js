@@ -28,36 +28,33 @@ async function createInvites(sender, receiver, description, path){
         invite.save()
         userReceiver.save()
         userSender.save()
-
     } catch (err) {
         return err
     }
 }
 
 //Deletes invites and sends it 
-async function removeInvites(sender, receiver, description, path, inviteId){
+async function removeInvites(sender, receiver, inviteId){
     try {
-        //Gets users
+        //Gets props
+        const invite = await Invite.findById(inviteId)
         const userSender = await User.findById(sender)
         const userReceiver = await User.findById(receiver)
-        const invite = await Invite.findById(inviteId)
 
-        //removes thing
-        
         //Removes it 
         userSender.myInvites = [
-            ...userSender.myInvites.filter(item => item === inviteId)
+            ...userSender.myInvites.filter(item => item.toString() !== inviteId)
         ]
         userReceiver.myInvites = [
-            ...userReceiver.myInvites.filter(item => item === inviteId)
+            ...userReceiver.myInvites.filter(item => item.toString() !== inviteId)
         ]
-
-        //Saves users and removes invite
-        userReceiver.save()
+        
+        //Saves and Sends message
         userSender.save()
+        userReceiver.save()
         invite.remove()
     } catch (err) {
-        return err
+        res.status(400).json(err)
     }
 }
 
@@ -108,3 +105,4 @@ router.delete("/:inviteId", verify, async (req, res) => {
 
 module.exports = router
 module.exports.createInvites = createInvites
+module.exports.removeInvites = removeInvites

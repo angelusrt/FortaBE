@@ -1,7 +1,7 @@
 const router = require("express").Router()
 
 const verify = require("./verifyToken")
-const { createInvites } = require("./invites")
+const { createInvites, removeInvites } = require("./invites")
 
 const User = require("../models/User")
 const Chat = require("../models/Chat")
@@ -27,11 +27,6 @@ router.get("/find/:username", async(req, res) => {
 //Creates Chat
 router.post("/", verify, async (req, res) => {
     try {
-        console.log("a")
-        const sender = await User.findById(req.user)
-        const receiver = await User.findById(req.body.user)
-        console.log(sender)
-        console.log(receiver)
         //Creates chat
         const chat = new Chat({
             members: [
@@ -51,8 +46,6 @@ router.post("/", verify, async (req, res) => {
         
         //Saves it and sends message
         chat.save()
-        sender.save()
-        receiver.save()
         res.json("Invited")
     } catch (err) {
         res.status(400).json(err)
@@ -92,14 +85,16 @@ router.patch("/:chatId", verify, async (req, res) => {
         
         //Update permission
         chatUser[0].stats = "nU"
-
+        
         //Adds chat to sender and receiver
         sender.myChat.push(chat._id)
         receiver.myChat.push(chat._id)
 
         //Saves and sends message
+        removeInvites(chat.members[0].member, chat.members[1].member, req.body.invite)
+        sender.save()
+        receiver.save()
         chat.save()
-        res.json("Updated")
     } catch (err) {
         res.status(400).json(err)
     }
@@ -185,28 +180,27 @@ router.delete("/:chatId", verify, async (req, res) => {
     try {
         //Gets chat
         const chat = await Chat.findById(req.params.chatId)
-        const chatUser = chat.members.filter(user => user.member.toString() === req.user)
-
-        const userSender = await User.findById(chat.members[0].member)
-        const userReceiver = await User.findById(chat.members[1].member)
+        const sender = await User.findById(chat.members[0].member)
+        const receiver = await User.findById(chat.members[1].member)
 
         //verify permission
-        if(req.user !== chatUser[0].member.toString())
+        if(req.user !== chat.members.map(user => user.member.toString()))
             return res.status(401).json("Action denied, you don't have permission") 
 
-        //Remove from list of users
-        userSender.myChat = [
-            ...userSender.myChat.filter(item => item._id.toString() !== req.params.chatId)
-        ]
-        userReceiver.myChat = [
-            ...userReceiver.myChat.filter(item => item._id.toString() !== req.params.chatId)
-        ]
+        //Removes chat of sender and receiver myChat
+        sender.myChat = {
+            ...sender.myChat.filter(item => item._id.toString() !== req.params.chatId)
+        }
+        receiver.myChat = {
+            ...receiver.myChat.filter(item => item._id.toString() !== req.params.chatId)
+        }
 
-        //Saves it, removes chat and sends it
-        userSender.save()
-        userReceiver.save()
+        //Saves it, removes chat and removes invites
+        removeInvites(chat.members[0].member, chat.members[1].member, req.body.invite)
+        sender.save()
+        receiver.save()
         chat.remove()
-        res.json("Removed")
+        chat.save()
     } catch (err) {
         res.status(400).json(err)
     }

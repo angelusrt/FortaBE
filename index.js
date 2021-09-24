@@ -1,6 +1,7 @@
 //Imports 
 const express = require("express")
 const mongoose = require("mongoose")
+const cors = require('cors')
 const dotenv = require("dotenv")
 
 //Initiate express
@@ -8,8 +9,6 @@ const app = express()
 
 //Get enviroment variable
 dotenv.config()
-
-console.log(process.env.DB_CONNECT)
 
 //Connect to DB
 mongoose.connect(
@@ -30,6 +29,7 @@ const groups = require("./routes/groups")
 
 //Route Middleware
 app.use(express.json())
+app.use(cors())
 app.use("/api/user", auth)
 app.use("/api/forums", forums)
 

@@ -1,8 +1,7 @@
 const router = require("express").Router()
 const mongoose = require("mongoose")
-
 const verify = require("./verifyToken")
-const { createInvites } = require("./invites")
+const { createInvites, removeInvites } = require("./invites")
  
 const Forum = require("../models/Forum")
 const Post = require("../models/Post")
@@ -120,7 +119,7 @@ router.patch("/:forumId/rules", verify, async (req, res) => {
 })
 
 //Add mod to forum ✓
-router.post("/:forumId/mods", verify, async (req, res) => {
+router.patch("/:forumId/mods", verify, async (req, res) => {
     try {    
         //Gets forum
         const forum = await Forum.findById(req.params.forumId)
@@ -131,36 +130,10 @@ router.post("/:forumId/mods", verify, async (req, res) => {
 
         //Updates the mod collection
         forum.mods.push({ mod: req.body.mods[0].mod, stats: false })
-
-        //antique method
-        //forum.mods.push(...req.body.mods.map( item => { return { mod: item.mod, stats: false } } ))
-
+        
         //Makes the invite and sends it
         createInvites(req.user, req.body.mods[0].mod, "mod", req.params.forumId)
 
-        //antique method
-        // for (let i = 0; i < req.body.mods.length; i++) {
-        //     createInvites(req.user, req.body.mods[i].mod, "mod", req.params.forumId)   
-        // }
-
-        //Saves and sends
-        forum.save()
-        res.json("Updated")
-    } catch (err) {
-        res.status(400).json(err)
-    }
-})
-
-//Updates mod status ✓
-router.patch("/:forumId/mods", verify, async (req, res) => {
-    try {    
-        //Gets forum
-        const forum = await Forum.findById(req.params.forumId)
-        const mod = await forum.mods.findOne({mod: req.user})
-
-        //Updates the mod collection
-        mod.stats = true
-        
         //Saves and sends
         forum.save()
         res.json("Updated")
@@ -185,16 +158,33 @@ router.delete("/:forumId/mods", verify, async (req, res) => {
         //Updates the mod collection
         forum.mods = [
             ...forum.mods.filter(item => {
-                // for (let i = 0; i < req.body.mods.length; i++) {
-                //     item.mod.toString() !== req.body.mods[i].mod
-                // }
                 item.mod.toString() !== req.body.mods[0].mod
             })
         ]
         
-        //Saves and sends
+        //Removes invites and saves forum
+        req.body.mods.map(mod => {
+            removeInvites(forum.owner, mod.mod, req.body.invite)            
+        })
         forum.save()
-        res.json("Removed")
+    } catch (err) {
+        res.status(400).json(err)
+    }
+})
+
+//Updates mod status ✓
+router.patch("/:forumId/mods/stats", verify, async (req, res) => {
+    try {    
+        //Gets forum
+        const forum = await Forum.findById(req.params.forumId)
+        const mod = await forum.mods.find(child => {return child.mod = req.user})
+        
+        //Updates the mod collection
+        mod.stats = true
+        
+        //Saves and sends
+        removeInvites(forum.owner, req.user, req.body.invite)
+        forum.save()
     } catch (err) {
         res.status(400).json(err)
     }
